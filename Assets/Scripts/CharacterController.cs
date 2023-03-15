@@ -4,12 +4,16 @@ using System.Collections.Generic;
 using System.Reflection.Emit;
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.TextCore;
 
-public class PlayerMovment : MonoBehaviour
+
+public class CharacterController : MonoBehaviour
 {
-
-    [SerializeField] private Transform top;
-    [SerializeField] private Transform bottom;
+    public static event Action<int> OnGround;
+    
+    [SerializeField] private GameObject top;
+    [SerializeField] private GameObject bottom;
     [SerializeField] private int jumpHeight = 3;
     [SerializeField] private float moveTime = 0.3f;
     
@@ -19,7 +23,19 @@ public class PlayerMovment : MonoBehaviour
     private float timeR;
     private float time;
     private bool isJump;
-    private bool onGround;
+    private bool onGround = true;
+    private bool isRoof;
+    private int currentHeight;
+
+
+    // private void OnEnable()
+    // {
+    //     Collision.OnGround += OnGround(false);
+    // }
+    // private void OnDisable()
+    // {
+    //     Collision.OnGround -= OnGround(true);
+    // }
 
     private void Start()
     {
@@ -27,13 +43,12 @@ public class PlayerMovment : MonoBehaviour
         timeR = 0.0f;
         time = 0.0f;
     }
-
-    // bug - if a person left tap and 2*right tap he can go faster 
-    private void Update()
+    
+    
+    private void FixedUpdate()
     {
         horizontal = (int) Input.GetAxisRaw("Horizontal");
         isJump = (Input.GetButtonDown("Jump")) ? true : false;
-        onGround = Physics2D.OverlapCircle(bottom.position,0.2f,0);
         
         // horizontal 
         timeL += Time.deltaTime;
@@ -50,33 +65,41 @@ public class PlayerMovment : MonoBehaviour
             transform.position += new Vector3(horizontal, 0, 0);
             timeR = 0;
         }
-            
-        // jump
-        if (onGround && isJump)
-        {
-            transform.position += new Vector3(0, 1, 0);
-        }
+
         
-        // gravity
-        if (!onGround && time > moveTime)
+        // jump
+        if (onGround && isJump && !isRoof && currentHeight < jumpHeight)
         {
-            transform.position += new Vector3(0, -1, 0);
-            Debug.Log(onGround);
+            currentHeight++;
+            transform.position += new Vector3(0, 1, 0);
+            
+        }
+        // gravity
+        if (!onGround && time > moveTime )
+        {
+            transform.position += Vector3.down * 1;
             
             time = 0;
         }
-            
+         
     }
 
-    IEnumerator test()
+    public void OnChildTriggerEnter(int whichCollider, Vector3 position)
     {
-        yield return new WaitForSeconds(0.1f);
-        transform.position += new Vector3(0, -1, 0);
+        if(whichCollider==0)
+            onGround = true;
+        else
+            isRoof = true;
     }
 
-    private void FixedUpdate()
+    public void OnChildTriggerExit(int whichCollider, Vector3 position)
     {
-
+        if(whichCollider==0)
+            onGround = false;
+        else
+            isRoof = false;
     }
-    
+
+
 }
+
