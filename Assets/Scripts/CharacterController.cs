@@ -17,11 +17,12 @@ public class CharacterController : MonoBehaviour
     private GameObject gm;
     private Rigidbody2D rgbody;
     private float movementSpeed;
-    private int horizontal;
+    public int horizontal;
     private float timeL;
     private float timeR;
     private bool isJump;
-    private bool onGround;
+    public bool onGround;
+    private bool waitingForInput;
     private int time = 0;
     
 
@@ -35,8 +36,6 @@ public class CharacterController : MonoBehaviour
     {
         gm = gameObject;
         rgbody = GetComponent <Rigidbody2D>();
-        timeL = 0.0f;
-        timeR = 0.0f;
         movementSpeed = 400f;
         time = 0;
     }
@@ -51,29 +50,26 @@ public class CharacterController : MonoBehaviour
     private void Update()
     {
         horizontal = (int)Input.GetAxisRaw("Horizontal");
-        isJump = (Input.GetButtonDown("Jump") && onGround) ? true : isJump;
+        isJump = (Input.GetButtonDown("Jump")) ;
     }
 
     
     
     private void CheckHorizontalMovement()
     {
-
-        // horizontal 
-        timeL += Time.deltaTime;
-        timeR += Time.deltaTime;
-        
-        if (timeL > moveTime && horizontal == -1)
+        if (horizontal == -1 && !waitingForInput)
         {
+            waitingForInput = true;
+            print("left");
+ 
             Move(Vector3.left);
             time--;
-            timeL = 0;
         }
-        if(timeR > moveTime && horizontal == 1)
+        if(horizontal == 1 && !waitingForInput)
         {
+            waitingForInput = true;
             Move(Vector3.right);
             time++;
-            timeR = 0;
         }
 
         
@@ -82,7 +78,7 @@ public class CharacterController : MonoBehaviour
     private void CheckJumpMovement()
     {
         // jump
-        if (isJump)
+        if (isJump && onGround)
         {
             Move(Vector3.up * jumpHeight);
             isJump = false;
@@ -102,18 +98,21 @@ public class CharacterController : MonoBehaviour
     
     IEnumerator MoveCoroutine(Vector3 direction)
     {
-        direction = direction * movementSpeed;
         Vector3 currentPosition = gm.transform.position;
-        rgbody.velocity = direction ;
+        rgbody.velocity = direction * (movementSpeed * Time.deltaTime);
         while (true)
         {
             Vector3 newPosition = gm.transform.position;
             if (Vector3.Distance(currentPosition, newPosition) > Vector3.Magnitude(direction))
             {
                 rgbody.velocity = Vector3.zero;
+                waitingForInput = false;
+                break;
             }
-            yield return new WaitForSeconds(0.2f);
+
+            yield return new WaitForSeconds(0.01f);
         }
+
     }
 
     
