@@ -37,22 +37,24 @@ public class CharacterController : MonoBehaviour
         rgbody = GetComponent <Rigidbody2D>();
         timeL = 0.0f;
         timeR = 0.0f;
-        movementSpeed = 10f;
+        movementSpeed = 400f;
         time = 0;
     }
     
-
+    private void FixedUpdate()
+    {
+        CheckHorizontalMovement();
+        CheckJumpMovement();
+    }
+    
+    
     private void Update()
     {
         horizontal = (int)Input.GetAxisRaw("Horizontal");
         isJump = (Input.GetButtonDown("Jump") && onGround) ? true : isJump;
     }
 
-    private void FixedUpdate()
-    {
-        CheckHorizontalMovement();
-        CheckJumpMovement();
-    }
+    
     
     private void CheckHorizontalMovement()
     {
@@ -63,13 +65,13 @@ public class CharacterController : MonoBehaviour
         
         if (timeL > moveTime && horizontal == -1)
         {
-            Move(Vector3.left * movementSpeed);
+            Move(Vector3.left);
             time--;
             timeL = 0;
         }
         if(timeR > moveTime && horizontal == 1)
         {
-            Move(Vector3.right * movementSpeed);
+            Move(Vector3.right);
             time++;
             timeR = 0;
         }
@@ -89,7 +91,7 @@ public class CharacterController : MonoBehaviour
         //snappy gravity
         if (!onGround)
         {
-            Move(Vector3.down );
+            Move(Vector3.down);
         }
     }
 
@@ -100,9 +102,9 @@ public class CharacterController : MonoBehaviour
     
     IEnumerator MoveCoroutine(Vector3 direction)
     {
-        print("moving");
+        direction = direction * movementSpeed;
         Vector3 currentPosition = gm.transform.position;
-        rgbody.velocity = direction;
+        rgbody.velocity = direction ;
         while (true)
         {
             Vector3 newPosition = gm.transform.position;
@@ -110,7 +112,7 @@ public class CharacterController : MonoBehaviour
             {
                 rgbody.velocity = Vector3.zero;
             }
-            yield return new WaitForSeconds(0.02f);
+            yield return new WaitForSeconds(0.2f);
         }
     }
 
