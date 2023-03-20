@@ -10,120 +10,111 @@ using UnityEngine.TextCore;
 
 public class CharacterController : MonoBehaviour
 {
-    
+
+    [SerializeField] private GameObject colliderChecker;
     [SerializeField] private int jumpHeight = 3;
     [SerializeField] private float moveTime = 0.3f;
 
     private GameObject gm;
     private Rigidbody2D rgbody;
+    private ColliderScript colliderScript;
     private float movementSpeed;
-    public int horizontal;
+    private int horizontal;
     private float timeL;
     private float timeR;
     private bool isJump;
-    public bool onGround;
-    private bool waitingForInput;
-    private int time = 0;
-    
+    private bool onGround;
+    public bool isWaiting;
 
-    
-    public int GetTime()
-    {
-        return time;
-    }
-    
-    private void Start()    
+
+    public int Time { get; private set; } = 0;
+
+    private void Start()
     {
         gm = gameObject;
-        rgbody = GetComponent <Rigidbody2D>();
-        movementSpeed = 400f;
-        time = 0;
+        rgbody = colliderChecker.GetComponent<Rigidbody2D>();
+        movementSpeed = 40f;
+        Time = 0;
+
+        colliderScript = (ColliderScript)colliderChecker.GetComponent(typeof(ColliderScript));
     }
-    
-    private void FixedUpdate()
+
+    private void LateUpdate()
     {
-        CheckHorizontalMovement();
-        CheckJumpMovement();
+        HorizontalMovement();
+        //JumpMovement();
     }
-    
-    
+
+
     private void Update()
     {
         horizontal = (int)Input.GetAxisRaw("Horizontal");
-        isJump = (Input.GetButtonDown("Jump")) ;
+        isJump = (Input.GetButtonDown("Jump"));
     }
 
-    
-    
-    private void CheckHorizontalMovement()
+
+
+    private void HorizontalMovement()
     {
-        if (horizontal == -1 && !waitingForInput)
+        if (horizontal == -1 && !isWaiting)
         {
-            waitingForInput = true;
-            print("left");
- 
+            isWaiting = true;
             Move(Vector3.left);
-            time--;
+            Time--;
         }
-        if(horizontal == 1 && !waitingForInput)
+
+        if (horizontal == 1 && !isWaiting)
         {
-            waitingForInput = true;
+            isWaiting = true;
             Move(Vector3.right);
-            time++;
+            Time++;
         }
 
         
-    }
+        rgbody.MovePosition(transform.position + Vector3.down);
+        onGround = !CheckIfCanMove();
 
-    private void CheckJumpMovement()
-    {
         // jump
-        if (isJump && onGround)
+        if (isJump && onGround && !isWaiting)
         {
+            isWaiting = true;
             Move(Vector3.up * jumpHeight);
             isJump = false;
         }
-        
+
         //snappy gravity
-        if (!onGround)
+        else if(!  && !isWaiting)
         {
+            isWaiting = true;
             Move(Vector3.down);
         }
     }
 
     private void Move(Vector3 direction)
     {
-        StartCoroutine(MoveCoroutine(direction));
+        StartCoroutine(MoveCoroutine2(direction));
     }
-    
-    IEnumerator MoveCoroutine(Vector3 direction)
-    {
-        Vector3 currentPosition = gm.transform.position;
-        rgbody.velocity = direction * (movementSpeed * Time.deltaTime);
-        while (true)
-        {
-            Vector3 newPosition = gm.transform.position;
-            if (Vector3.Distance(currentPosition, newPosition) > Vector3.Magnitude(direction))
-            {
-                rgbody.velocity = Vector3.zero;
-                waitingForInput = false;
-                break;
-            }
 
-            yield return new WaitForSeconds(0.01f);
+    private bool CheckIfCanMove()
+    {
+        return (colliderScript.Collision) ? false : true;
+    }
+
+    IEnumerator MoveCoroutine2(Vector3 direction)
+    {
+        
+        rgbody.MovePosition(transform.position + direction);
+        print(CheckIfCanMove());
+        if (CheckIfCanMove())
+        {
+            transform.position += direction;
+            print("is moving");
         }
 
+        yield return new WaitForSeconds(1f);
+        isWaiting = false;
+
     }
 
-    
-    private void OnTriggerEnter2D(Collision2D col)
-    {
-        onGround = true;
-    }
-
-    private void OnTriggerExit2D(Collision2D col)
-    {
-        onGround = false;
-    }
 }
 
