@@ -13,6 +13,8 @@ public class CharacterMovement : MonoBehaviour
     private int verticalInput;
     private float horizontalTempTime =0;
     private float verticalTempTime =0;
+    private float TempTimeLeft = 0;
+    private float TempTimeRight = 0;
     
     public void Update()
     {
@@ -29,16 +31,27 @@ public class CharacterMovement : MonoBehaviour
     public void Moving()
     {
         
-        horizontalTempTime += Time.deltaTime;
+        TempTimeLeft += Time.deltaTime;
+        TempTimeRight += Time.deltaTime;
         verticalTempTime += Time.deltaTime;
-        
-        if(horizontalTempTime >= horizontalTime & horizontalInput != 0)
+
+        bool canMoveLeft =  (TempTimeLeft >= horizontalTime & horizontalInput == -1);
+        bool canMoveRight =  (TempTimeRight >= horizontalTime & horizontalInput == 1);
+        bool canMoveVertical = (verticalTempTime >= verticalTime & verticalInput != 0);
+
+        if((canMoveLeft) | (canMoveRight))
         {
-            horizontalTempTime = 0;
+            if (canMoveLeft)
+                TempTimeLeft = 0;
+            
+            if (canMoveRight)
+                TempTimeRight = 0;
+            
+
             moveDirection = new Vector3(horizontalInput, 0, 0);
             Move();
         }
-        else if(verticalTempTime >= verticalTime & verticalInput != 0)
+        else if(canMoveVertical)
         {
             verticalTempTime = 0;
             moveDirection = new Vector3(0, verticalInput, 0);
